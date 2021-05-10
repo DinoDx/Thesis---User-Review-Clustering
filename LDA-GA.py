@@ -8,22 +8,25 @@ from geneticalgorithm2 import Crossover, Mutations, Selection
 from textblob import TextBlob
 import re
 import spacy
+import json
+import os
+import glob
 
-# some fake documents
-doc_a = "Broccoli is good to eat. My brother likes to eat good broccoli, but not my mother."
-doc_b = "My mother spends a lot of time driving my brother around to baseball practice."
-doc_c = "Some health experts suggest that driving may cause increased tension and blood pressure."
-doc_d = "I often feel pressure to perform well at school, but my mother never seems to drive my brother to do better."
-doc_e = "Health professionals say that broccoli is good for your health."
-
-# put documents into a list
-doc_set = [doc_a, doc_b, doc_c, doc_d, doc_e]
+doc_set = []
 filtered = []
 texts = []
 tokenizer = RegexpTokenizer(r'\w+')
 en_stop = get_stop_words('en')
 p_stemmer = PorterStemmer()
 spa = spacy.load("en_core_web_sm")
+dir_path = 'C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\app_reviews'
+
+for filename in glob.glob(os.path.join(dir_path, '*.JSON')):
+  with open(filename, 'r') as f:
+        for element in f:   
+            data = json.loads(element)
+            doc_set.append(data['comment'])
+        f.close()
 
 
 def decontract(phrase):
@@ -44,22 +47,31 @@ for doc in doc_set:
     raw = doc.lower()
 
     correct = TextBlob(raw).correct()
+    print('corrected')
 
-    long = decontract(str(correct))
+    long_words = decontract(str(correct))
+    print('longed')
 
-    tagged = spa(doc)
+    tagged = spa(long_words)
+    print('tagged')
 
     for w in tagged:
         if w.pos_ == 'NOUN' or w.pos_ == 'VERB':
             filtered.append(w)
 
+    print('filtered')
+
     singular = TextBlob(str(filtered)).words.singularize()
+    print('singularized')
 
     tokens = tokenizer.tokenize(str(singular))
+    print('tokenized')
 
     stopped_tokens = [doc for doc in tokens if doc not in en_stop]
+    print('stop removed')
 
     stemmed_tokens = [p_stemmer.stem(doc) for doc in stopped_tokens]
+    print('stemmed')
 
     final_tokens = list(dict.fromkeys(stemmed_tokens))
 
@@ -69,6 +81,8 @@ for doc in doc_set:
 
     if len(final_tokens) > 3:
         texts.append(stemmed_tokens)
+
+print('preprocessing is finished')
 
 dictionary = corpora.Dictionary(texts)
 corpus = [dictionary.doc2bow(text) for text in texts]
@@ -86,6 +100,7 @@ def fitness(c):
                                                eta=float(c[2]))
     cm = gensim.models.ldamodel.CoherenceModel(model=ldamodel, corpus=corpus, coherence='u_mass')
     coherence = cm.get_coherence()
+    print(coherence)
     return -coherence
 
 
@@ -102,6 +117,8 @@ alg_param = {'max_num_iteration': 100,
              'selection_type': Selection.roulette(),
              'max_iteration_without_improv': 10}
 
+print('premodel')
 model = ga(fitness, 4, variable_type_mixed=vartypes, variable_boundaries=varbounds, algorithm_parameters=alg_param)
+print('postmodel, prerun')
 model.run(no_plot=True)
 model.plot_results()

@@ -7,22 +7,28 @@ from nltk.stem.porter import PorterStemmer
 from gensim import corpora, models
 from textblob import TextBlob
 import spacy
+import json
+import os
+import glob
+import time
 
-# some fake documents
-doc_a = "Broccoli is good to eat. My brother likes to eat good broccoli, but not my mother."
-doc_b = "My mother spends a lot of time driving my brother around to baseball practice."
-doc_c = "Some health experts suggest that driving may cause increased tension and blood pressure."
-doc_d = "I often feel pressure to perform well at school, but my mother never seems to drive my brother to do better."
-doc_e = "Health professionals say that broccoli is good for your health."
+start_time = time.time()
 
-# put documents into a list
-doc_set = [doc_a, doc_b, doc_c, doc_d, doc_e]
+doc_set = []
 filtered = []
 texts = []
 tokenizer = RegexpTokenizer(r'\w+')
 en_stop = get_stop_words('en')
 p_stemmer = PorterStemmer()
 spa = spacy.load("en_core_web_sm")
+dir_path = 'C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\app_reviews'
+
+for filename in glob.glob(os.path.join(dir_path, '*.JSON')):
+  with open(filename, 'r') as f:
+        for element in f:   
+            data = json.loads(element)
+            doc_set.append(data['comment'])
+        f.close()
 
 
 def decontract(phrase):
@@ -44,9 +50,9 @@ for doc in doc_set:
 
     correct = TextBlob(raw).correct()
 
-    long = decontract(str(correct))
+    long_words = decontract(str(correct))
 
-    tagged = spa(doc)
+    tagged = spa(long_words)
 
     for w in tagged:
         if w.pos_ == 'NOUN' or w.pos_ == 'VERB':
@@ -78,3 +84,4 @@ pprint.pprint(hdp_model.print_topics())
 
 coherence = gensim.models.coherencemodel.CoherenceModel(hdp_model, corpus=corpus, coherence='u_mass')
 print(coherence.get_coherence())
+print("--- %s seconds ---" % (time.time() - start_time))
