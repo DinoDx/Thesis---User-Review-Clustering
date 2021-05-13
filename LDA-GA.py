@@ -2,31 +2,12 @@ import gensim
 from gensim import corpora
 from nltk import RegexpTokenizer, PorterStemmer
 from stop_words import get_stop_words
+from nltk import pos_tag
 import numpy as np
 from geneticalgorithm2 import geneticalgorithm2 as ga
 from geneticalgorithm2 import Crossover, Mutations, Selection
 from textblob import TextBlob
-import re
-import spacy
-import json
-import os
-import glob
-
-doc_set = []
-filtered = []
-texts = []
-tokenizer = RegexpTokenizer(r'\w+')
-en_stop = get_stop_words('en')
-p_stemmer = PorterStemmer()
-spa = spacy.load("en_core_web_sm")
-dir_path = 'C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\app_reviews'
-
-for filename in glob.glob(os.path.join(dir_path, '*.JSON')):
-  with open(filename, 'r') as f:
-        for element in f:   
-            data = json.loads(element)
-            doc_set.append(data['comment'])
-        f.close()
+import re, json, os, glob, time
 
 
 def decontract(phrase):
@@ -43,82 +24,85 @@ def decontract(phrase):
     return phrase
 
 
-for doc in doc_set:
-    raw = doc.lower()
+def main():
+    start_time = time.time()
+    doc_set = []
+    filtered = []
+    texts = []
+    tokenizer = RegexpTokenizer(r'\w+')
+    en_stop = get_stop_words('en')
+    p_stemmer = PorterStemmer()
+    dir_path = 'C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\app_reviews'
 
-    correct = TextBlob(raw).correct()
-    print('corrected')
+    # input
+    for filename in glob.glob(os.path.join(dir_path, '*.JSON')):
+        with open(filename, 'r') as f:
+            for element in f:   
+                data = json.loads(element)
+                doc_set.append(data['comment'])
+            f.close()
 
-    long_words = decontract(str(correct))
-    print('longed')
+    # input preprocessing        
+    for doc in doc_set:
 
-    tagged = spa(long_words)
-    print('tagged')
+        correct = TextBlob(doc).correct()
 
-    for w in tagged:
-        if w.pos_ == 'NOUN' or w.pos_ == 'VERB':
-            filtered.append(w)
+        long_words = decontract(str(correct))
 
-    print('filtered')
+        tokens = tokenizer.tokenize(long_words)
 
-    singular = TextBlob(str(filtered)).words.singularize()
-    print('singularized')
+        stopped_tokens = [w for w in tokens if w not in en_stop]
 
-    tokens = tokenizer.tokenize(str(singular))
-    print('tokenized')
+        stemmed_tokens = [p_stemmer.stem(w) for w in stopped_tokens]
 
-    stopped_tokens = [doc for doc in tokens if doc not in en_stop]
-    print('stop removed')
+        tagged = pos_tag(stemmed_tokens)
 
-    stemmed_tokens = [p_stemmer.stem(doc) for doc in stopped_tokens]
-    print('stemmed')
+        filtered = [w[0] for w in tagged if  w[1] == 'NN' or w[1] == 'NNP' or w[1] == 'VB']
 
-    final_tokens = list(dict.fromkeys(stemmed_tokens))
+        final_tokens = list(dict.fromkeys(filtered))
 
-    for t in final_tokens:
-        if len(t) < 3:
-            stemmed_tokens.remove(t)
+        final_tokens_longer_than_3 = [t for t in final_tokens if len(t) >= 3]
 
-    if len(final_tokens) > 3:
-        texts.append(stemmed_tokens)
+        if len(final_tokens_longer_than_3) > 3:
+            texts.append(final_tokens_longer_than_3)
 
-print('preprocessing is finished')
+    print(len(texts))
 
-dictionary = corpora.Dictionary(texts)
-corpus = [dictionary.doc2bow(text) for text in texts]
+    dictionary = corpora.Dictionary(texts)
+    corpus = [dictionary.doc2bow(text) for text in texts]
 
-# ga
-population = []
-pop_size = 100
-crossover_prob = 0.6
-mutation_prob = 0.01
-
-
-def fitness(c):
-    ldamodel = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=dictionary, num_topics=int(c[0]),
-                                               passes=int(c[1]), alpha=float(c[2]),
-                                               eta=float(c[2]))
-    cm = gensim.models.ldamodel.CoherenceModel(model=ldamodel, corpus=corpus, coherence='u_mass')
-    coherence = cm.get_coherence()
-    print(coherence)
-    return -coherence
+    # ga
+    pop_size = 100
+    crossover_prob = 0.6
+    mutation_prob = 0.01
 
 
-vartypes = np.array(['int', 'int', 'real', 'real'])
-varbounds = np.array([[2, 10], [10, 20], [0, 1], [0, 1]])
-alg_param = {'max_num_iteration': 100,
-             'population_size': pop_size,
-             'mutation_probability': mutation_prob,
-             'elit_ratio': 0.02,
-             'crossover_probability': crossover_prob,
-             'parents_portion': 0.02,
-             'crossover_type': Crossover.arithmetic(),
-             'mutation_type': Mutations.uniform_by_center(),
-             'selection_type': Selection.roulette(),
-             'max_iteration_without_improv': 10}
+    def fitness(c):
+        ldamodel = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=dictionary, num_topics=int(c[0]),
+                                                passes=int(c[1]), alpha=float(c[2]), eta=float(c[2]))
+        cm = gensim.models.ldamodel.CoherenceModel(model=ldamodel, texts=texts, dictionary=dictionary, coherence= 'c_v')
+        coherence = cm.get_coherence()
+        print(coherence)
+        return -coherence
 
-print('premodel')
-model = ga(fitness, 4, variable_type_mixed=vartypes, variable_boundaries=varbounds, algorithm_parameters=alg_param)
-print('postmodel, prerun')
-model.run(no_plot=True)
-model.plot_results()
+
+    varbounds = np.array([[2, 10], [10, 20], [0, 1], [0, 1]])
+    alg_param = {'max_num_iteration': 100,
+                'population_size': pop_size,
+                'mutation_probability': mutation_prob,
+                'elit_ratio': 0.02,
+                'parents_portion': 0.02,
+                'crossover_probability': crossover_prob,
+                'crossover_type': Crossover.arithmetic(),
+                'mutation_type': Mutations.uniform_by_center(),
+                'selection_type': Selection.roulette(),
+                'max_iteration_without_improv': 10}
+
+    model = ga(fitness, 4, function_timeout=60.0 , variable_type= 'real', variable_boundaries=varbounds, algorithm_parameters=alg_param)
+    model.run()
+
+    print("--- %s seconds ---" % (time.time() - start_time))
+
+
+if __name__ == "__main__":
+    main()

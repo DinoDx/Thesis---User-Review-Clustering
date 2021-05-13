@@ -1,34 +1,11 @@
 import gensim
 from stop_words import get_stop_words
+from nltk import pos_tag
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.porter import PorterStemmer
-from gensim import corpora, models
-import re
+from gensim import corpora
 from textblob import TextBlob
-import spacy
-import json
-import pprint
-import os
-import glob
-import time
-
-start_time = time.time()
-
-doc_set = []
-texts = []
-tokenizer = RegexpTokenizer(r'\w+')
-en_stop = get_stop_words('en')
-p_stemmer = PorterStemmer()
-spa = spacy.load("en_core_web_sm")
-dir_path = 'C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\app_reviews'
-
-for filename in glob.glob(os.path.join(dir_path, '*.JSON')):
-  with open(filename, 'r') as f:
-        for element in f:   
-            data = json.loads(element)
-            doc_set.append(data['comment'])
-        f.close()
-
+import re, json, pprint, os, glob, time
 
 
 def decontract(phrase):
@@ -42,51 +19,64 @@ def decontract(phrase):
     phrase = re.sub(r"\'t", " not", phrase)
     phrase = re.sub(r"\'ve", " have", phrase)
     phrase = re.sub(r"\'m", " am", phrase)
+    
     return phrase
 
 
-for doc in doc_set:
-    raw = doc.lower()
+def main():
+    start_time = time.time()
+    doc_set = []
+    texts = []
+    tokenizer = RegexpTokenizer(r'\w+')
+    en_stop = get_stop_words('en')
+    p_stemmer = PorterStemmer()
+    dir_path = 'C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\app_reviews'
 
-    correct = TextBlob(raw).correct()
+    # input
+    for filename in glob.glob(os.path.join(dir_path, '*.json')):
+        with open(filename, 'r') as f:
+            for element in f:   
+                data = json.loads(element)
+                doc_set.append(data['comment'])
+            f.close()
+            
+    # input preprocessing        
+    for doc in doc_set:
 
-    long_words = decontract(str(correct))
+        correct = TextBlob(doc).correct()
 
-    tagged = spa(long_words)
+        long_words = decontract(str(correct))
 
-    filtered  = []
-    for w in tagged:
-        if w.pos_ == 'NOUN' or w.pos_ == 'VERB':
-            filtered.append(w)
+        tokens = tokenizer.tokenize(long_words)
+
+        stopped_tokens = [w for w in tokens if w not in en_stop]
+
+        stemmed_tokens = [p_stemmer.stem(w) for w in stopped_tokens]
+
+        tagged = pos_tag(stemmed_tokens)
+
+        filtered = [w[0] for w in tagged if  w[1] == 'NN' or w[1] == 'NNP' or w[1] == 'VB']
+
+        final_tokens = list(dict.fromkeys(filtered))
+
+        final_tokens_longer_than_3 = [t for t in final_tokens if len(t) >= 3]
+
+        if len(final_tokens_longer_than_3) > 3:
+            texts.append(final_tokens_longer_than_3)
+
+    print(len(texts))
+
+    # clustering
+    dictionary = corpora.Dictionary(texts)
+    corpus = [dictionary.doc2bow(text) for text in texts]
+    ldamodel = gensim.models.ldamodel.LdaModel(corpus= corpus, num_topics=4, id2word=dictionary, passes=100)
+    coherence = gensim.models.coherencemodel.CoherenceModel(model=ldamodel, texts=texts, dictionary=dictionary, coherence= 'c_v')
+
+    pprint.pprint(coherence.get_coherence())
+    pprint.pprint(ldamodel.print_topics())
+
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
-    singular = TextBlob(str(filtered)).words.singularize()
-
-    tokens = tokenizer.tokenize(str(singular))
-
-    stopped_tokens = [doc for doc in tokens if doc not in en_stop]
-
-    stemmed_tokens = [p_stemmer.stem(doc) for doc in stopped_tokens]
-
-    final_tokens = []
-    final_tokens = list(dict.fromkeys(stemmed_tokens))
-
-    for t in final_tokens:
-        if len(t) < 3:
-            final_tokens.remove(t)
-
-    if len(final_tokens) > 3:
-        texts.append(final_tokens)
-
-print(texts)
-print(len(texts))
-
-
-dictionary = corpora.Dictionary(texts)
-corpus = [dictionary.doc2bow(text) for text in texts]
-ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=3, id2word=dictionary, passes=20)
-coherence = gensim.models.coherencemodel.CoherenceModel(ldamodel, corpus=corpus, coherence='u_mass')
-
-pprint.pprint(coherence.get_coherence())
-pprint.pprint(ldamodel.print_topics(num_topics=3, num_words=3))
-print("--- %s seconds ---" % (time.time() - start_time))
+if __name__ == "__main__":
+    main()
