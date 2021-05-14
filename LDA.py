@@ -5,8 +5,7 @@ from nltk.tokenize import RegexpTokenizer
 from nltk.stem.porter import PorterStemmer
 from gensim import corpora
 from textblob import TextBlob
-import re, json, pprint, os, glob, time
-
+import re, json, pprint, os, glob, time, pyLDAvis.gensim_models, pyLDAvis
 
 def decontract(phrase):
     phrase = re.sub(r"won\'t", "will not", phrase)
@@ -64,16 +63,15 @@ def main():
         if len(final_tokens_longer_than_3) > 3:
             texts.append(final_tokens_longer_than_3)
 
-    print(len(texts))
-
     # clustering
     dictionary = corpora.Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
-    ldamodel = gensim.models.ldamodel.LdaModel(corpus= corpus, num_topics=4, id2word=dictionary, passes=100)
+    ldamodel = gensim.models.ldamodel.LdaModel(corpus= corpus, num_topics=4, id2word=dictionary, passes=1)
     coherence = gensim.models.coherencemodel.CoherenceModel(model=ldamodel, texts=texts, dictionary=dictionary, coherence= 'c_v')
+    print(coherence.get_coherence())
 
-    pprint.pprint(coherence.get_coherence())
-    pprint.pprint(ldamodel.print_topics())
+    vis = pyLDAvis.gensim_models.prepare(ldamodel, corpus= corpus, dictionary=dictionary)
+    pyLDAvis.save_html(vis, 'lda.html')
 
     print("--- %s seconds ---" % (time.time() - start_time))
 

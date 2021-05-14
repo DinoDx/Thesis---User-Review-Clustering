@@ -6,7 +6,7 @@ from nltk.tokenize import RegexpTokenizer
 from nltk.stem.porter import PorterStemmer
 from gensim import corpora
 from textblob import TextBlob
-import re, json, pprint, os, glob, time
+import re, json, pprint, os, glob, time, pyLDAvis.gensim_models, pyLDAvis
 import pandas as pd
 
 def decontract(phrase):
@@ -65,18 +65,18 @@ def main():
         if len(final_tokens_longer_than_3) > 3:
             texts.append(final_tokens_longer_than_3)
 
-    print(len(texts))
 
     #clustering
     dictionary = corpora.Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
-    hdp_model = gensim.models.hdpmodel.HdpModel(corpus, dictionary)
-    print(hdp_model.show_topics())
-
+    hdp_model = gensim.models.hdpmodel.HdpModel(corpus, dictionary, T= 20)
     coherence = gensim.models.coherencemodel.CoherenceModel(model=hdp_model, texts=texts, dictionary=dictionary, coherence= 'c_v')
     print(coherence.get_coherence())
-    print("--- %s seconds ---" % (time.time() - start_time))
 
+    vis = pyLDAvis.gensim_models.prepare(hdp_model, corpus= corpus, dictionary=dictionary)
+    pyLDAvis.save_html(vis, 'hdp.html')
+
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 if __name__ == "__main__":
     main()

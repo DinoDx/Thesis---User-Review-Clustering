@@ -80,25 +80,22 @@ def main():
     def fitness(c):
         ldamodel = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=dictionary, num_topics=int(c[0]),
                                                 passes=int(c[1]), alpha=float(c[2]), eta=float(c[2]))
-        cm = gensim.models.ldamodel.CoherenceModel(model=ldamodel, texts=texts, dictionary=dictionary, coherence= 'c_v')
-        coherence = cm.get_coherence()
-        print(coherence)
+        coherence = gensim.models.ldamodel.CoherenceModel(model=ldamodel, texts=texts, dictionary=dictionary, coherence= 'c_v').get_coherence()
         return -coherence
 
 
-    varbounds = np.array([[2, 10], [10, 20], [0, 1], [0, 1]])
+    varbounds = np.array([[2, 20], [10, 100], [0, 1], [0, 1]])
     alg_param = {'max_num_iteration': 100,
-                'population_size': pop_size,
+                'population_size': 10,
                 'mutation_probability': mutation_prob,
-                'elit_ratio': 0.02,
-                'parents_portion': 0.02,
+                'elit_ratio': 0.2,
                 'crossover_probability': crossover_prob,
                 'crossover_type': Crossover.arithmetic(),
                 'mutation_type': Mutations.uniform_by_center(),
                 'selection_type': Selection.roulette(),
                 'max_iteration_without_improv': 10}
 
-    model = ga(fitness, 4, function_timeout=60.0 , variable_type= 'real', variable_boundaries=varbounds, algorithm_parameters=alg_param)
+    model = ga(fitness, 4, function_timeout=60.0 , variable_type='real', variable_boundaries=varbounds, algorithm_parameters=alg_param)
     model.run()
 
     print("--- %s seconds ---" % (time.time() - start_time))
