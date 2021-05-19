@@ -32,6 +32,7 @@ def main():
                 'population_size': pop_size,
                 'mutation_probability': mutation_prob,
                 'elit_ratio': 0.2,
+                'parents_portion' : 0.2,
                 'crossover_probability': crossover_prob,
                 'crossover_type': Crossover.arithmetic(),
                 'mutation_type': Mutations.uniform_by_center(),
