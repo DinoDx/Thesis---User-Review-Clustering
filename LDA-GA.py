@@ -37,7 +37,7 @@ def main():
                 'selection_type': Selection.roulette(),
                 'max_iteration_without_improv': 10}
 
-    model = ga(fitness, 4, function_timeout=30.0 , variable_type='real', variable_boundaries=varbounds, algorithm_parameters=alg_param)
+    model = ga(fitness, 4, function_timeout=60.0 , variable_type='real', variable_boundaries=varbounds, algorithm_parameters=alg_param)
     model.run()
 
     print("--- %s seconds ---" % (time.time() - start_time))
