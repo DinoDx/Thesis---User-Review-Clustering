@@ -26,7 +26,7 @@ def main():
         return -(coherence.get_coherence())
 
 
-    varbounds = np.array([[2, 20], [0, 1], [0, 1]])
+    varbounds = np.array([[2, 30], [0, 1], [0, 1]])
     var_types = np.array(['int', 'real', 'real'])
     alg_param = {'max_num_iteration': 100,
                 'population_size': pop_size,
@@ -38,7 +38,7 @@ def main():
                 'selection_type': Selection.roulette(),
                 'max_iteration_without_improv': 10}
 
-    model = ga(fitness, 3, function_timeout=100.0 , variable_type_mixed=var_types, variable_boundaries=varbounds, algorithm_parameters=alg_param)
+    model = ga(fitness, 3, function_timeout=20.0 , variable_type_mixed=var_types, variable_boundaries=varbounds, algorithm_parameters=alg_param)
     model.run()
 
     print("--- %s seconds ---" % (time.time() - start_time))
