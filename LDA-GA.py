@@ -1,7 +1,7 @@
 from gensim import corpora
 from geneticalgorithm2 import geneticalgorithm2 as ga
 from geneticalgorithm2 import Crossover, Mutations, Selection
-import time,pickle, gensim, numpy as np
+import time,pickle, numpy as np
 from gensim.models.coherencemodel import CoherenceModel
 from gensim.models.ldamodel import LdaModel
 
