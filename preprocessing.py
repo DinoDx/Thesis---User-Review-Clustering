@@ -1,5 +1,6 @@
+from nltk.util import pr
 from stop_words import get_stop_words
-from nltk import pos_tag
+from nltk import pos_tag, text
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.porter import PorterStemmer
 from textblob import TextBlob
@@ -53,10 +54,9 @@ def preprocess(doc):
     final_tokens_longer_than_3 = [t for t in final_tokens if len(t) >= 3]
 
     if len(final_tokens_longer_than_3) > 3:
-        global texts
-        texts.append(final_tokens_longer_than_3)
+        return final_tokens_longer_than_3
 
-
+        
 if __name__ == '__main__':
     for file in glob.glob(os.path.join(dir_path, '*.json')):
         with open(file, 'r') as f:
@@ -66,14 +66,12 @@ if __name__ == '__main__':
             f.close()
 
     pool = Pool(cpu_count()-1)
-    pool.map(preprocess, doc_set)
+    texts = [text for text in pool.map(preprocess, doc_set) if text is not None]
     pool.close()
     pool.join()
-    file = open('preprocessedData.txt', 'wb')
-    print(texts)
+    file = open('preprocessedData.txt', 'ab')
     pickle.dump(texts, file)
 
     file.close()
 
     print("--- %s seconds ---" % (time.time() - start_time))
-

@@ -1,22 +1,35 @@
-from gensim import corpora
-import time, pyLDAvis.gensim_models, pyLDAvis, gensim, pickle
+from re import template
+from gensim.models import coherencemodel
 
-def main():
+import numpy as np
+import HDPUtils, pickle, time
+import tomotopy as tp
+from gensim import corpora
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+if __name__ == "__main__":
     start_time = time.time()
     file = open('preprocessedData.txt', 'rb')
     texts = pickle.load(file)
     dictionary = corpora.Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
+    results = []
 
     #clustering
-    hdp_model = gensim.models.hdpmodel.HdpModel(corpus, dictionary, T= 20)
-    coherence = gensim.models.coherencemodel.CoherenceModel(model=hdp_model, texts=texts, dictionary=dictionary, coherence= 'c_v')
-    print(coherence.get_coherence())
+    for t in range (10, 100, 10):
+        hdp_model = tp.HDPModel(tw= tp.TermWeight.ONE, min_cf=5, rm_top=7, initial_k=2)
+        hdp_model_trained = HDPUtils.train_HDPmodel(hdp=hdp_model, word_list=texts, mcmc_iter=t)
+        topics = HDPUtils.get_hdp_topics(hdp_model_trained, top_n=10)
+        score = HDPUtils.eval_coherence(topics_dict=topics, word_list=texts)
+        print("with {} iterations score : {} with {} topics".format(t, score, hdp_model_trained.live_k))
+        tup = t, score
+        results.append(tup)
 
-    vis = pyLDAvis.gensim_models.prepare(hdp_model, corpus= corpus, dictionary=dictionary)
-    pyLDAvis.save_html(vis, 'hdp.html')
+    results = pd.DataFrame(results, columns=['iteration', 'score'])
+    s = pd.Series(results.score.values, index=results.iteration.values)
+    _ = s.plot()
+    plt.show()
 
     print("--- %s seconds ---" % (time.time() - start_time))
-
-if __name__ == "__main__":
-    main()
