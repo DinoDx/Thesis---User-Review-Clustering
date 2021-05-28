@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     #clustering
     for t in range (10, 100, 10):
-        hdp_model = tp.HDPModel(tw= tp.TermWeight.ONE, min_cf=5, rm_top=7, initial_k=2)
+        hdp_model = tp.HDPModel(tw= tp.TermWeight.ONE, initial_k=2)
         hdp_model_trained = HDPUtils.train_HDPmodel(hdp=hdp_model, word_list=texts, mcmc_iter=t)
         topics = HDPUtils.get_hdp_topics(hdp_model_trained, top_n=10)
         score = HDPUtils.eval_coherence(topics_dict=topics, word_list=texts)
