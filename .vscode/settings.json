@@ -1,4 +1,14 @@
 {
     "python.pythonPath": "C:\\Users\\Dino\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe",
-    "jupyter.jupyterServerType": "local"
+    "jupyter.jupyterServerType": "local",
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "c:\\Users\\Dino\\Desktop\\Tirocinio e tesi\\ARdoc_API\\ARdoc_API.jar",
+        "c:\\Users\\Dino\\Desktop\\Tirocinio e tesi\\ARdoc_API\\lib\\ejml-0.23.jar",
+        "c:\\Users\\Dino\\Desktop\\Tirocinio e tesi\\ARdoc_API\\lib\\lucene-analyzers-common-5.3.1.jar",
+        "c:\\Users\\Dino\\Desktop\\Tirocinio e tesi\\ARdoc_API\\lib\\lucene-core-5.3.1.jar",
+        "c:\\Users\\Dino\\Desktop\\Tirocinio e tesi\\ARdoc_API\\lib\\stanford-corenlp-3.4.1.jar",
+        "c:\\Users\\Dino\\Desktop\\Tirocinio e tesi\\ARdoc_API\\lib\\stanford-corenlp-3.4.1-models.jar",
+        "c:\\Users\\Dino\\Desktop\\Tirocinio e tesi\\ARdoc_API\\lib\\weka.jar"
+    ]
 }

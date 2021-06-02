@@ -58,20 +58,17 @@ def preprocess(doc):
 
         
 if __name__ == '__main__':
-    for file in glob.glob(os.path.join(dir_path, '*.json')):
-        with open(file, 'r') as f:
-            for element in f:
-                data = json.loads(element)
-                doc_set.append(data['comment'])
-            f.close()
+    with open('filteredData.txt', 'r', errors="ignore") as f:
+        for line in f:
+            doc_set.append(line)
+    f.close()
 
     pool = Pool(cpu_count()-1)
     texts = [text for text in pool.map(preprocess, doc_set) if text is not None]
     pool.close()
     pool.join()
-    file = open('preprocessedData.txt', 'ab')
+    file = open('preprocessedData.txt', 'wb')
     pickle.dump(texts, file)
-
     file.close()
 
     print("--- %s seconds ---" % (time.time() - start_time))
