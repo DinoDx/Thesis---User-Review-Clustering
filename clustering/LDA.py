@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
     
     start_time = time.time()
-    file = open('preprocessedData.txt', 'rb')
+    file = open('preprocessing\\preprocessedData.txt', 'rb')
     texts = pickle.load(file)
     dictionary = corpora.Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
     results = []
 
     # clustering
-    for t in range(2, 30):
+    for t in range(2, 10):
         lda_model = LdaModel(corpus, id2word=dictionary, num_topics=t)
         coherence = CoherenceModel(model=lda_model, texts=texts, dictionary=dictionary, coherence= 'c_v')
         score = coherence.get_coherence()

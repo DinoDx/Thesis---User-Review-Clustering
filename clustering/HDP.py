@@ -1,13 +1,9 @@
-from re import template
-from gensim.models import coherencemodel
-
-import numpy as np
-import HDPUtils, pickle, time
+import  pickle, time
 import tomotopy as tp
 from gensim import corpora
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from clustering import HDPUtils as HDPUtils
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -19,7 +15,7 @@ if __name__ == "__main__":
 
     #clustering
     for t in range (10, 100, 10):
-        hdp_model = tp.HDPModel(tw= tp.TermWeight.ONE, initial_k=2)
+        hdp_model = tp.HDPModel(tw= tp.TermWeight.ONE ,initial_k=2)
         hdp_model_trained = HDPUtils.train_HDPmodel(hdp=hdp_model, word_list=texts, mcmc_iter=t)
         topics = HDPUtils.get_hdp_topics(hdp_model_trained, top_n=10)
         score = HDPUtils.eval_coherence(topics_dict=topics, word_list=texts)

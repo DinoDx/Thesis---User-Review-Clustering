@@ -2,13 +2,12 @@ from gensim import corpora
 from geneticalgorithm2 import geneticalgorithm2 as ga
 from geneticalgorithm2 import Crossover, Mutations, Selection
 import time,pickle, numpy as np
-from matplotlib.pyplot import cohere
 from gensim.models.coherencemodel import CoherenceModel
 from gensim.models.ldamodel import LdaModel
 
 def main():
     start_time = time.time()
-    file = open('preprocessedData.txt', 'rb')
+    file = open('preprocessing\\preprocessedData.txt', 'rb')
     texts = pickle.load(file)
     dictionary = corpora.Dictionary(texts)
     corpus = [dictionary.doc2bow(text) for text in texts]
@@ -26,7 +25,7 @@ def main():
         return -(coherence.get_coherence())
 
 
-    varbounds = np.array([[2, 30], [0, 1], [0, 1]])
+    varbounds = np.array([[2, 10], [0, 1], [0, 1]])
     var_types = np.array(['int', 'real', 'real'])
     alg_param = {'max_num_iteration': 100,
                 'population_size': pop_size,

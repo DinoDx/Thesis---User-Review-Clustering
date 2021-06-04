@@ -58,7 +58,7 @@ def preprocess(doc):
 
         
 if __name__ == '__main__':
-    with open('filteredData.txt', 'r', errors="ignore") as f:
+    with open('filtering\\filteredData.txt', 'r', errors="ignore") as f:
         for line in f:
             doc_set.append(line)
     f.close()

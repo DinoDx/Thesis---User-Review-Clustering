@@ -1,4 +1,4 @@
-package ARdoc;
+package filtering;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,7 +33,7 @@ public class Filter {
         Parser p = Parser.getInstance();
         int i = 0;
         try{
-            File file2 = new File("C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\filteredData.txt");
+            File file2 = new File("C:\\Users\\Dino\\Desktop\\User-Review-Clustering\\filtering\\filteredData.txt");
             BufferedWriter printer = new BufferedWriter(new FileWriter(file2, true));
             for(String review : reviews){
                 ArrayList<Result> res = p.extract("TA", review);
