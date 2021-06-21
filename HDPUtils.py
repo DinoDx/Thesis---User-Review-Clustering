@@ -1,6 +1,5 @@
 import gensim.corpora as corpora
 from gensim.models import CoherenceModel
-import sys
 
 def train_HDPmodel(hdp, word_list, mcmc_iter, burn_in=100, quiet=False):
     '''Wrapper function to train tomotopy HDP Model object
